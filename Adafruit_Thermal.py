@@ -1,4 +1,14 @@
 #*************************************************************************
+# This is a MicroPython library for the Adafruit Thermal Printer, based on
+# Python library by Adafruit. For more info and troubleshooting see the
+# README and the original repo at:
+# 	https://github.com/adafruit/Python-Thermal-Printer
+#
+# Tested with LoPy v1.
+# The RX pin functionality was not tested.
+#
+# MicroPython port by Dominik Kapusta.
+#*************************************************************************
 # This is a Python library for the Adafruit Thermal Printer.
 # Pick one up at --> http://www.adafruit.com/products/597
 # These printers use TTL serial to communicate, 2 pins are required.
@@ -32,8 +42,6 @@
 # - Trap errors properly.  Some stuff just falls through right now.
 # - Add docstrings throughout!
 
-# Python 2.X code using the library usu. needs to include the next line:
-# from __future__ import print_function
 from machine import UART
 import time
 import sys
@@ -77,7 +85,7 @@ class Adafruit_Thermal:
 		self.timeoutSet(0.5)
 
 		# skip wake and reset at startup since it the printer seems to not need them
-		# and these commands printed garbage (the actual bytes)		
+		# and these commands printed garbage (the actual bytes)
 		# self.wake()
 		# self.reset()
 
