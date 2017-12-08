@@ -55,11 +55,11 @@ printer.setBarcodeHeight(100)
 printer.printBarcode("123456789123", printer.UPC_A)
 
 # # Print the 75x75 pixel logo in adalogo.py
-# import adalogo
+# import gfx.adalogo
 # printer.printBitmap(adalogo.width, adalogo.height, adalogo.data)
 #
 # # Print the 135x135 pixel QR code in adaqrcode.py
-# import adaqrcode
+# import gfx.adaqrcode
 # printer.printBitmap(adaqrcode.width, adaqrcode.height, adaqrcode.data)
 printer.println("Adafruit!")
 printer.feed(2)
