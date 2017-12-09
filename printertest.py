@@ -3,7 +3,7 @@
 from Adafruit_Thermal import *
 from machine import Pin
 
-printer = Adafruit_Thermal(baudrate=9600, pins=(Pin.exp_board.G14, Pin.exp_board.G15))
+printer = Adafruit_Thermal(pins=(Pin.exp_board.G14, Pin.exp_board.G15))
 
 # Test inverse on & off
 printer.inverseOn()

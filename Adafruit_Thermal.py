@@ -63,9 +63,9 @@ class Adafruit_Thermal:
 	defaultHeatTime     =   120
 	defaultHeatInterval =    40
 	baudrate            =  9600
-	pins                = ('P0', 'P1')
+	pins                = ('P1', 'P0')
 
-	def __init__(self, baudrate=9600, pins=('P0', 'P1'), **kwargs):
+	def __init__(self, bus=1, baudrate=9600, pins=('P1', 'P0'), **kwargs):
 		# Calculate time to issue one byte to the printer.
 		# 11 bits (not 8) to accommodate idle, start and
 		# stop bits.  Idle time might be unnecessary, but
@@ -74,7 +74,7 @@ class Adafruit_Thermal:
 
 		self.baudrate = baudrate
 		self.pins = pins
-		self.uart = UART(1, baudrate=baudrate, pins=pins, stop=2)
+		self.uart = UART(bus, baudrate=baudrate, pins=pins, stop=2)
 
 		# Remainder of this method was previously in begin()
 
