@@ -84,15 +84,6 @@ class Adafruit_Thermal:
 		# before printer can receive data.
 		self.timeoutSet(0.5)
 
-		# skip wake and reset at startup since it the printer seems to not need them
-		# and these commands printed garbage (the actual bytes)
-		# self.wake()
-		# self.reset()
-
-		# instead, add a call to flush() to avoid extra garbage
-		# in the first line you're gonna print
-		self.flush()
-
 		# Description of print settings from p. 23 of manual:
 		# ESC 7 n1 n2 n3 Setting Control Parameter Command
 		# Decimal: 27 55 n1 n2 n3
