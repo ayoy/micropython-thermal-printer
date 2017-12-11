@@ -1,6 +1,8 @@
 # MicroPython Thermal Printer
 This is the MicroPython port of Python Thermal Printer by Adafruit, available [elsewhere on GitHub](https://github.com/adafruit/Python-Thermal-Printer).
 
+Read the full story at https://kapusta.cc/2017/12/11/thermal-printer-library-for-micropython/.
+
 ## The summary of changes
 
 1. Removed Python 2.x code
