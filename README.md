@@ -4,11 +4,11 @@ This is the MicroPython port of Python Thermal Printer by Adafruit, available [e
 ## The summary of changes
 
 1. Removed Python 2.x code
-1. Removed `writeToStdout()
+1. Removed `writeToStdout()`
 1. Replaced `Serial` with `machine.UART`
 1. Removed support for pre-2.68 firmware
 1. Removed image printing method, because it depended on Python Imaging Library
-1. Disabled calls to `wake()` and `reset() at initialization
+1. Disabled calls to `wake()` and `reset()` at initialization
 1. Fixes to `sleepAfter()` and `wake()`
 1. Parametrized heat dots and heat interval settings for various versions of printers
 
