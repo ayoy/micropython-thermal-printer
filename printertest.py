@@ -3,7 +3,9 @@
 from Adafruit_Thermal import *
 from machine import Pin
 
-printer = Adafruit_Thermal(pins=(Pin.exp_board.G14, Pin.exp_board.G15))
+# Feel free to experiment with heatdots, heattime and heatiniterval
+# to nail down your printer's sweet spot :)
+printer = Adafruit_Thermal(pins=(Pin.exp_board.G14,), heatdots=5, heatinterval=40)
 
 # Test inverse on & off
 printer.inverseOn()
@@ -58,12 +60,15 @@ printer.printBarcode("123456789123", printer.UPC_A)
 import adalogo
 printer.printBitmap(adalogo.width, adalogo.height, adalogo.data)
 
-# # Print the 135x135 pixel QR code in adaqrcode.py
-# import gfx.adaqrcode as adaqrcode
-# printer.printBitmap(adaqrcode.width, adaqrcode.height, adaqrcode.data)
+# # Print the 135x135 pixel QR code stored in the file on disk
+try:
+    printer.printBitmapFromFile(135, 135, '/flash/lib/qrcode')
+except:
+    pass
+
 printer.println("Adafruit!")
 printer.feed(3)
 
-printer.sleep()      # Tell printer to sleep
-printer.wake()       # Call wake() before printing again, even if reset
+# printer.sleep()      # Tell printer to sleep
+# printer.wake()       # Call wake() before printing again, even if reset
 printer.setDefault() # Restore printer to defaults

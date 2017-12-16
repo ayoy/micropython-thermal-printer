@@ -450,7 +450,7 @@ class Adafruit_Thermal:
 		# opposite effect on small images that would fit
 		# in a single 'chunk', so use carefully!
 		if LaaT: maxChunkHeight = 1
-		else:    maxChunkHeight = 255
+		else:    maxChunkHeight = 50 # lower max chunk (not 255) for memory-constrained systems (LoPy v1)
 
 		i = 0
 		for rowStart in range(0, h, maxChunkHeight):
@@ -469,6 +469,48 @@ class Adafruit_Thermal:
 				i += rowBytes
 
 		self.prevByte = '\n'
+
+	def printBitmapFromFile(self, w, h, filename, LaaT=False):
+		rowBytes = int((w + 7) / 8)  # Round up to next byte boundary
+		if rowBytes >= 48:
+			rowBytesClipped = 48  # 384 pixels max width
+		else:
+			rowBytesClipped = rowBytes
+
+		# if LaaT (line-at-a-time) is True, print bitmaps
+		# scanline-at-a-time (rather than in chunks).
+		# This tends to make for much cleaner printing
+		# (no feed gaps) on large images...but has the
+		# opposite effect on small images that would fit
+		# in a single 'chunk', so use carefully!
+		if LaaT: maxChunkHeight = 1
+		else:    maxChunkHeight = 50 # lower max chunk (not 255) for memory-constrained systems (LoPy v1)
+
+		try:
+			with open(filename, 'rb') as bitmap_file:
+				i = 0
+				for rowStart in range(0, h, maxChunkHeight):
+					chunkHeight = h - rowStart
+					if chunkHeight > maxChunkHeight:
+						chunkHeight = maxChunkHeight
+
+					# Timeout wait happens here
+					self.writeBytes(18, 42, chunkHeight, rowBytesClipped)
+
+					for y in range(chunkHeight):
+						line = bytearray(bitmap_file.read(rowBytesClipped))
+						self.timeoutWait()
+						self.timeoutSet(rowBytesClipped * self.dotPrintTime)
+						self.uart.write(line)
+						i += rowBytes
+						bitmap_file.seek(i)
+
+				self.prevByte = '\n'
+
+		except OSError as e:
+			print('file access error: {}'.format(e.errno))
+
+
 
 	# Take the printer offline. Print commands sent after this
 	# will be ignored until 'online' is called.
