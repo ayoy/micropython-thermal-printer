@@ -462,11 +462,11 @@ class Adafruit_Thermal:
 			self.writeBytes(18, 42, chunkHeight, rowBytesClipped)
 
 			for y in range(chunkHeight):
-				for x in range(rowBytesClipped):
-					self.uart.write(chr(bitmap[i]))
-					i += 1
-				i += rowBytes - rowBytesClipped
-			self.timeoutSet(chunkHeight * self.dotPrintTime)
+				line = bitmap[i:i+rowBytesClipped]
+				self.timeoutWait()
+				self.timeoutSet(len(line) * self.dotPrintTime)
+				self.uart.write(bytearray(line))
+				i += rowBytes
 
 		self.prevByte = '\n'
 
