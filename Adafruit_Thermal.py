@@ -74,7 +74,7 @@ class Adafruit_Thermal:
 
 		self.baudrate = baudrate
 		self.pins = pins
-		self.uart = UART(bus, baudrate=baudrate, pins=pins, stop=2)
+		self.uart = UART(bus, baudrate=baudrate, pins=pins, stop=1)
 
 		# Remainder of this method was previously in begin()
 
