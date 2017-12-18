@@ -12,7 +12,11 @@ Read the full story at https://kapusta.cc/2017/12/11/thermal-printer-library-for
 1. Removed image printing method, because it depended on Python Imaging Library
 1. Disabled calls to `wake()` and `reset()` at initialization
 1. Fixes to `sleepAfter()` and `wake()`
-1. Parametrized heat dots and heat interval settings for various versions of printers
+
+## Additions
+
+* `printBitmapFromFile()` - allows for printing the bitmap from file on disk, instead of reading it from array of bytes like `printBitmap()` does.
+* heat dots, heat time and heat interval settings are parametrized in the initializer to fine tune printer output.
 
 ## Usage
 
@@ -20,4 +24,4 @@ See [printertest.py]( https://github.com/ayoy/micropython-thermal-printer/blob/m
 
 ## Testing
 
-So far I tested it only with LoPy version 1. Works fine, besides printing bitmaps that requires too much memory for the LoPy (for the bitmap provided with printertest.py).
+So far I tested it only with LoPy version 1. Works fine, besides printing large bitmaps that required too much memory for the LoPy (for the bitmap provided with printertest.py) - hence `printBitmapFromFile()`.
