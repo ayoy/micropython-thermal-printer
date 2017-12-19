@@ -177,7 +177,7 @@ class Adafruit_Thermal:
 		  35, # Print density
 		  (printBreakTime << 5) | printDensity)
 		self.dotPrintTime = 30
-		self.dotFeedTime  = 2.1
+		self.dotFeedTime  = 2
 
 	# Because there's no flow control between the printer and computer,
 	# special care must be taken to avoid overrunning the printer's
@@ -350,8 +350,7 @@ class Adafruit_Thermal:
 		n = len(text)
 		if n > 255: n = 255
 		self.uart.write(chr(n))
-		for i in range(n):
-			self.uart.write(text[i])
+		self.uart.write(text)
 		self.prevByte = '\n'
 
 	# === Character commands ===
