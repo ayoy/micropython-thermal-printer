@@ -95,7 +95,7 @@ class BitmapHeaderInfo:
 class Adafruit_Thermal:
 
 	resumeTime          =   0.0
-	byteTime            =   0.0
+	byteTime            =   0
 	dotPrintTime        =   0.0
 	dotFeedTime         =   0.0
 	prevByte            =  '\n'
@@ -109,9 +109,9 @@ class Adafruit_Thermal:
 	defaultHeatTime     =   120
 	defaultHeatInterval =    40
 	baudrate            =  9600
-	pins                = ('P1', 'P0')
+	pins                = None
 
-	def __init__(self, bus=1, baudrate=9600, pins=('P1', 'P0'), **kwargs):
+	def __init__(self, bus=1, baudrate=9600, pins=None, **kwargs):
 		# Calculate time to issue one byte to the printer.
 		# 11 bits (not 8) to accommodate idle, start and
 		# stop bits.  Idle time might be unnecessary, but
@@ -119,8 +119,13 @@ class Adafruit_Thermal:
 		self.byteTime = round((11 / baudrate) * 1000)  # ms
 
 		self.baudrate = baudrate
-		self.pins = pins
-		self.uart = UART(bus, baudrate=baudrate, pins=pins, stop=1)
+
+		# ESP8266 doesn't support pins parameter
+		extra_options = {}
+		if pins is not None:
+			extra_options['pins'] = pins
+
+		self.uart = UART(bus, baudrate=baudrate, stop=1, **extra_options)
 
 		# Remainder of this method was previously in begin()
 
