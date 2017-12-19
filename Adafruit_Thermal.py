@@ -116,7 +116,7 @@ class Adafruit_Thermal:
 		# 11 bits (not 8) to accommodate idle, start and
 		# stop bits.  Idle time might be unnecessary, but
 		# erring on side of caution here.
-		self.byteTime = 11.0 / float(baudrate)
+		self.byteTime = round((11 / baudrate) * 1000)  # ms
 
 		self.baudrate = baudrate
 		self.pins = pins
@@ -128,7 +128,7 @@ class Adafruit_Thermal:
 		# upon power up -- it needs a moment to cold boot
 		# and initialize.  Allow at least 1/2 sec of uptime
 		# before printer can receive data.
-		self.timeoutSet(0.5)
+		self.timeoutSet(500)
 
 		# Description of print settings from p. 23 of manual:
 		# ESC 7 n1 n2 n3 Setting Control Parameter Command
@@ -171,8 +171,8 @@ class Adafruit_Thermal:
 		  18, # DC2
 		  35, # Print density
 		  (printBreakTime << 5) | printDensity)
-		self.dotPrintTime = 0.03
-		self.dotFeedTime  = 0.0021
+		self.dotPrintTime = 30
+		self.dotFeedTime  = 2.1
 
 	# Because there's no flow control between the printer and computer,
 	# special care must be taken to avoid overrunning the printer's
@@ -188,11 +188,11 @@ class Adafruit_Thermal:
 
 	# Sets estimated completion time for a just-issued task.
 	def timeoutSet(self, x):
-		self.resumeTime = utime.ticks_ms() + x*1000
+		self.resumeTime = utime.ticks_add(utime.ticks_ms(), x)
 
 	# Waits (if necessary) for the prior task to complete.
 	def timeoutWait(self):
-		while (utime.ticks_ms() - self.resumeTime) < 0: pass
+		while utime.ticks_diff(utime.ticks_ms(), self.resumeTime) < 0: pass
 
 	# Printer performance may vary based on the power supply voltage,
 	# thickness of paper, phase of the moon and other seemingly random
@@ -236,10 +236,10 @@ class Adafruit_Thermal:
 						      self.dotFeedTime)
 					else:
 						# Text line
-						d += ((self.charHeight *
+						d += int(((self.charHeight *
 						       self.dotPrintTime) +
 						      (self.lineSpacing *
-						       self.dotFeedTime))
+						       self.dotFeedTime)))
 						self.column = 0
 						# Treat wrap as newline
 						# on next pass
