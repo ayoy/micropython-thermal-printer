@@ -46,6 +46,52 @@ from machine import UART
 import time
 import sys
 
+class BitmapHeader:
+    SIZE_IN_BYTES = 14
+
+    def __init__(self, bytes):
+        if len(bytes) != 14:
+            raise ValueError
+
+        if bytes[0:2] != b'BM':
+            raise ValueError
+
+        self.file_size = int.from_bytes(bytes[2:6], 'little')
+        self.data_offset = int.from_bytes(bytes[-4:], 'little')
+
+
+class BitmapHeaderInfo:
+    SIZE_IN_BYTES = 40
+
+    def __init__(self, bytes):
+        if len(bytes) != 40:
+            raise ValueError
+        if int.from_bytes(bytes[12:14], 'little') != 1:
+            raise ValueError # planes
+        if int.from_bytes(bytes[14:16], 'little') != 1:
+            raise ValueError # bit-depth
+        if int.from_bytes(bytes[16:20], 'little') != 0:
+            raise ValueError # compression
+        if int.from_bytes(bytes[32:36], 'little') > 1:
+            raise ValueError # we accept at most 1 color
+        if int.from_bytes(bytes[36:40], 'little') > 1:
+            raise ValueError # we accept at most 1 significant color
+
+        self.width = int.from_bytes(bytes[4:8], 'little')
+        self.height = int.from_bytes(bytes[8:12], 'little')
+
+        self.width_in_bytes = int((self.width+7)/8)
+        padding = (4 - int(self.width_in_bytes % 4)) % 4
+
+        self.line_width = self.width_in_bytes + padding
+        self.width_padding = (self.width_in_bytes + padding) * 8 - self.width
+        self.last_byte_padding = self.width_in_bytes * 8 - self.width
+
+        self.data_size = int.from_bytes(bytes[20:24], 'little')
+        self.ppm_x = int.from_bytes(bytes[24:28], 'little')
+        self.ppm_y = int.from_bytes(bytes[28:32], 'little')
+
+
 class Adafruit_Thermal:
 
 	resumeTime          =   0.0
@@ -510,6 +556,63 @@ class Adafruit_Thermal:
 		except OSError as e:
 			print('file access error: {}'.format(e.errno))
 
+
+	def printBMPImage(self, filename, LaaT=False):
+		try:
+			with open(filename, 'rb') as bmp_file:
+				header = BitmapHeader(bmp_file.read(BitmapHeader.SIZE_IN_BYTES))
+				header_info = BitmapHeaderInfo(bmp_file.read(BitmapHeaderInfo.SIZE_IN_BYTES))
+
+				data_end = header.file_size - 2
+
+				if header_info.width_in_bytes >= 48:
+					rowBytesClipped = 48  # 384 pixels max width
+				else:
+					rowBytesClipped = header_info.width_in_bytes
+
+				# if LaaT (line-at-a-time) is True, print bitmaps
+				# scanline-at-a-time (rather than in chunks).
+				# This tends to make for much cleaner printing
+				# (no feed gaps) on large images...but has the
+				# opposite effect on small images that would fit
+				# in a single 'chunk', so use carefully!
+				if LaaT: maxChunkHeight = 1
+				else:    maxChunkHeight = 50 # lower max chunk (not 255) for memory-constrained systems (LoPy v1)
+
+				for startRow in range(0, header_info.height, maxChunkHeight):
+					chunkHeight = header_info.height - startRow
+					if chunkHeight > maxChunkHeight:
+						chunkHeight = maxChunkHeight
+
+					# Timeout wait happens here
+					self.writeBytes(18, 42, chunkHeight, rowBytesClipped)
+					for row in range(startRow + 1, startRow + 1 + chunkHeight):
+						# seek to beginning of line
+						bmp_file.seek(data_end - row * header_info.line_width)
+
+						# read the whole line
+						if header_info.last_byte_padding == 0 or header_info.width_in_bytes <= rowBytesClipped:
+							line = bytearray(bmp_file.read(rowBytesClipped))
+							self.timeoutWait()
+							self.timeoutSet(rowBytesClipped * self.dotPrintTime)
+							self.uart.write(line)
+						else:
+							self.timeoutWait()
+							if rowBytesClipped > 1:
+								line = bytearray(bmp_file.read(rowBytesClipped-1))
+								self.timeoutSet((rowBytesClipped - 1) * self.dotPrintTime)
+								self.uart.write(line)
+							else:
+								self.timeoutSet(self.dotPrintTime)
+
+							data = bmp_file.read(1)
+							mask = 0xFF<<header_info.last_byte_padding & 0xFF
+							self.uart.write(bytes([ord(data) & mask]))
+
+				self.prevByte = '\n'
+
+		except OSError as e:
+			print('error: {}'.format(e))
 
 
 	# Take the printer offline. Print commands sent after this
