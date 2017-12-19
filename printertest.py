@@ -48,6 +48,9 @@ printer.println("Taller\nline\nspacing")
 printer.setLineHeight() # Reset to default
 printer.justify('L')
 
+# Change printer settings for smoother barcodes
+printer = Adafruit_Thermal(pins=(Pin.exp_board.G14,), heatdots=4, heattime=120, heatinterval=80)
+
 # Barcode examples
 printer.feed(1)
 # CODE39 is the most common alphanumeric barcode
@@ -55,20 +58,32 @@ printer.printBarcode("ADAFRUT", printer.CODE39)
 printer.setBarcodeHeight(100)
 # Print UPC line on product barcodes
 printer.printBarcode("123456789123", printer.UPC_A)
+time.sleep(2)
+
+# These settings allow for much cleaner output when printing images
+printer = Adafruit_Thermal(pins=(Pin.exp_board.G14,), heatdots=1, heattime=155, heatinterval=1)
 
 # # Print the 75x75 pixel logo in adalogo.py
 import adalogo
-printer.printBitmap(adalogo.width, adalogo.height, adalogo.data)
+printer.printBitmap(adalogo.width, adalogo.height, adalogo.data, LaaT=True)
+printer.println("Adafruit!")
 
-# # Print the 135x135 pixel QR code stored in the file on disk
 try:
-    printer.printBitmapFromFile(135, 135, '/flash/lib/qrcode')
-except:
+    # # Print the 135x135 pixel QR code stored in the file on disk
+    printer.printBitmapFromFile(135, 135, '/flash/gfx/qrcode')
+
+    # TODO: figure out what's wrong here
+    time.sleep(2)
+
+    # # Print some .bmp bitmap images
+    printer.printBMPImage('/flash/gfx/aykm.bmp')
+    printer.printBMPImage('/flash/gfx/notbad.bmp')
+except OSError as e:
+    print(e.errno)
     pass
 
-printer.println("Adafruit!")
 printer.feed(3)
 
 # printer.sleep()      # Tell printer to sleep
 # printer.wake()       # Call wake() before printing again, even if reset
-printer.setDefault() # Restore printer to defaults
+# printer.setDefault() # Restore printer to defaults
