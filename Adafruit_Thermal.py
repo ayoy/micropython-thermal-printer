@@ -220,18 +220,16 @@ class Adafruit_Thermal:
 	def writeBytes(self, *args):
 		self.timeoutWait()
 		self.timeoutSet(len(args) * self.byteTime)
-		for arg in args:
-			self.uart.write(chr(arg))
+		self.uart.write(bytes(args))
 
 	# Override write() method to keep track of paper feed.
 	def write(self, *data):
-		for i in range(len(data)):
-			c = data[i]
-			if c != 0x13:
+		for char in data:
+			if char != 0x13:
 				self.timeoutWait()
-				self.uart.write(c)
+				self.uart.write(char)
 				d = self.byteTime
-				if ((c == '\n') or
+				if ((char == '\n') or
 				    (self.column == self.maxColumn)):
 					# Newline or wrap
 					if self.prevByte == '\n':
@@ -248,11 +246,11 @@ class Adafruit_Thermal:
 						self.column = 0
 						# Treat wrap as newline
 						# on next pass
-						c = '\n'
+						char = '\n'
 				else:
 					self.column += 1
 				self.timeoutSet(d)
-				self.prevByte = c
+				self.prevByte = char
 
 	# The bulk of this method was moved into __init__,
 	# but this is left here for compatibility with older
