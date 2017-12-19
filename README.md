@@ -16,6 +16,7 @@ Read the full story at https://kapusta.cc/2017/12/11/thermal-printer-library-for
 ## Additions
 
 * `printBitmapFromFile()` - allows for printing the bitmap from file on disk, instead of reading it from array of bytes like `printBitmap()` does.
+* `printBMPImage()` - allows for printing the actual .bmp image. Supports 1-bit Windows BMP format only, up to 384px wide.
 * heat dots, heat time and heat interval settings are parametrized in the initializer to fine tune printer output.
 
 ## Usage
