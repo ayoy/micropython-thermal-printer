@@ -43,7 +43,7 @@
 # - Add docstrings throughout!
 
 from machine import UART
-import time
+import utime
 import sys
 
 class BitmapHeader:
@@ -188,11 +188,11 @@ class Adafruit_Thermal:
 
 	# Sets estimated completion time for a just-issued task.
 	def timeoutSet(self, x):
-		self.resumeTime = time.time() + x
+		self.resumeTime = utime.ticks_ms() + x*1000
 
 	# Waits (if necessary) for the prior task to complete.
 	def timeoutWait(self):
-		while (time.time() - self.resumeTime) < 0: pass
+		while (utime.ticks_ms() - self.resumeTime*1000) < 0: pass
 
 	# Printer performance may vary based on the power supply voltage,
 	# thickness of paper, phase of the moon and other seemingly random
@@ -594,16 +594,14 @@ class Adafruit_Thermal:
 						if header_info.last_byte_padding == 0 or header_info.width_in_bytes <= rowBytesClipped:
 							line = bytearray(bmp_file.read(rowBytesClipped))
 							self.timeoutWait()
-							self.timeoutSet(rowBytesClipped * self.dotPrintTime)
+							self.timeoutSet(self.dotPrintTime)
 							self.uart.write(line)
 						else:
 							self.timeoutWait()
+							self.timeoutSet(self.dotPrintTime)
 							if rowBytesClipped > 1:
 								line = bytearray(bmp_file.read(rowBytesClipped-1))
-								self.timeoutSet((rowBytesClipped - 1) * self.dotPrintTime)
 								self.uart.write(line)
-							else:
-								self.timeoutSet(self.dotPrintTime)
 
 							data = bmp_file.read(1)
 							mask = 0xFF<<header_info.last_byte_padding & 0xFF
@@ -636,7 +634,7 @@ class Adafruit_Thermal:
 	def wake(self):
 		self.timeoutSet(0)
 		self.writeBytes(255)
-		time.sleep(0.05)            # 50 ms
+		utime.sleep_ms(50)            # 50 ms
 		self.writeBytes(27, 56, 0) # Sleep off (important!)
 
 	# Empty method, included for compatibility
