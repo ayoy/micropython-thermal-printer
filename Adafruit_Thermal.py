@@ -192,7 +192,7 @@ class Adafruit_Thermal:
 
 	# Waits (if necessary) for the prior task to complete.
 	def timeoutWait(self):
-		while (utime.ticks_ms() - self.resumeTime*1000) < 0: pass
+		while (utime.ticks_ms() - self.resumeTime) < 0: pass
 
 	# Printer performance may vary based on the power supply voltage,
 	# thickness of paper, phase of the moon and other seemingly random
