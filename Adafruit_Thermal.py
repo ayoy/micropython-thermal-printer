@@ -112,6 +112,11 @@ class Adafruit_Thermal:
 	pins                = None
 
 	def __init__(self, bus=1, baudrate=9600, pins=None, **kwargs):
+		# Fallback to regular +,- operator in case 
+		# utime.ticks_add and/or utime.ticks_diff are unavailable.
+		self.ticks_diff = utime.ticks_diff if hasattr(utime, 'ticks_diff') else lambda x, y: x - y
+		self.ticks_add = utime.ticks_add if hasattr(utime, 'ticks_add') else lambda x, y: x + y
+
 		# Calculate time to issue one byte to the printer.
 		# 11 bits (not 8) to accommodate idle, start and
 		# stop bits.  Idle time might be unnecessary, but
@@ -193,11 +198,11 @@ class Adafruit_Thermal:
 
 	# Sets estimated completion time for a just-issued task.
 	def timeoutSet(self, x):
-		self.resumeTime = utime.ticks_add(utime.ticks_ms(), x)
+		self.resumeTime = self.ticks_add(utime.ticks_ms(), x)
 
 	# Waits (if necessary) for the prior task to complete.
 	def timeoutWait(self):
-		while utime.ticks_diff(utime.ticks_ms(), self.resumeTime) < 0: pass
+		while self.ticks_diff(utime.ticks_ms(), self.resumeTime) < 0: pass
 
 	# Printer performance may vary based on the power supply voltage,
 	# thickness of paper, phase of the moon and other seemingly random
