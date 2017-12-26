@@ -95,7 +95,7 @@ class BitmapHeaderInfo:
 class Adafruit_Thermal:
 
 	resumeTime          =   0.0
-	byteTime            =   0.0
+	byteTime            =   0
 	dotPrintTime        =   0.0
 	dotFeedTime         =   0.0
 	prevByte            =  '\n'
@@ -109,18 +109,28 @@ class Adafruit_Thermal:
 	defaultHeatTime     =   120
 	defaultHeatInterval =    40
 	baudrate            =  9600
-	pins                = ('P1', 'P0')
+	pins                = None
 
-	def __init__(self, bus=1, baudrate=9600, pins=('P1', 'P0'), **kwargs):
+	def __init__(self, bus=1, baudrate=9600, pins=None, **kwargs):
+		# Fallback to regular +,- operator in case 
+		# utime.ticks_add and/or utime.ticks_diff are unavailable.
+		self.ticks_diff = utime.ticks_diff if hasattr(utime, 'ticks_diff') else lambda x, y: x - y
+		self.ticks_add = utime.ticks_add if hasattr(utime, 'ticks_add') else lambda x, y: x + y
+
 		# Calculate time to issue one byte to the printer.
 		# 11 bits (not 8) to accommodate idle, start and
 		# stop bits.  Idle time might be unnecessary, but
 		# erring on side of caution here.
-		self.byteTime = 11.0 / float(baudrate)
+		self.byteTime = round((11 / baudrate) * 1000)  # ms
 
 		self.baudrate = baudrate
-		self.pins = pins
-		self.uart = UART(bus, baudrate=baudrate, pins=pins, stop=1)
+
+		# ESP8266 doesn't support pins parameter
+		extra_options = {}
+		if pins is not None:
+			extra_options['pins'] = pins
+
+		self.uart = UART(bus, baudrate=baudrate, stop=1, **extra_options)
 
 		# Remainder of this method was previously in begin()
 
@@ -128,7 +138,7 @@ class Adafruit_Thermal:
 		# upon power up -- it needs a moment to cold boot
 		# and initialize.  Allow at least 1/2 sec of uptime
 		# before printer can receive data.
-		self.timeoutSet(0.5)
+		self.timeoutSet(500)
 
 		# Description of print settings from p. 23 of manual:
 		# ESC 7 n1 n2 n3 Setting Control Parameter Command
@@ -171,8 +181,8 @@ class Adafruit_Thermal:
 		  18, # DC2
 		  35, # Print density
 		  (printBreakTime << 5) | printDensity)
-		self.dotPrintTime = 0.03
-		self.dotFeedTime  = 0.0021
+		self.dotPrintTime = 30
+		self.dotFeedTime  = 2
 
 	# Because there's no flow control between the printer and computer,
 	# special care must be taken to avoid overrunning the printer's
@@ -188,11 +198,11 @@ class Adafruit_Thermal:
 
 	# Sets estimated completion time for a just-issued task.
 	def timeoutSet(self, x):
-		self.resumeTime = utime.ticks_ms() + x*1000
+		self.resumeTime = self.ticks_add(utime.ticks_ms(), x)
 
 	# Waits (if necessary) for the prior task to complete.
 	def timeoutWait(self):
-		while (utime.ticks_ms() - self.resumeTime) < 0: pass
+		while self.ticks_diff(utime.ticks_ms(), self.resumeTime) < 0: pass
 
 	# Printer performance may vary based on the power supply voltage,
 	# thickness of paper, phase of the moon and other seemingly random
@@ -215,18 +225,16 @@ class Adafruit_Thermal:
 	def writeBytes(self, *args):
 		self.timeoutWait()
 		self.timeoutSet(len(args) * self.byteTime)
-		for arg in args:
-			self.uart.write(chr(arg))
+		self.uart.write(bytes(args))
 
 	# Override write() method to keep track of paper feed.
 	def write(self, *data):
-		for i in range(len(data)):
-			c = data[i]
-			if c != 0x13:
+		for char in data:
+			if char != 0x13:
 				self.timeoutWait()
-				self.uart.write(c)
+				self.uart.write(char)
 				d = self.byteTime
-				if ((c == '\n') or
+				if ((char == '\n') or
 				    (self.column == self.maxColumn)):
 					# Newline or wrap
 					if self.prevByte == '\n':
@@ -236,18 +244,18 @@ class Adafruit_Thermal:
 						      self.dotFeedTime)
 					else:
 						# Text line
-						d += ((self.charHeight *
+						d += int(((self.charHeight *
 						       self.dotPrintTime) +
 						      (self.lineSpacing *
-						       self.dotFeedTime))
+						       self.dotFeedTime)))
 						self.column = 0
 						# Treat wrap as newline
 						# on next pass
-						c = '\n'
+						char = '\n'
 				else:
 					self.column += 1
 				self.timeoutSet(d)
-				self.prevByte = c
+				self.prevByte = char
 
 	# The bulk of this method was moved into __init__,
 	# but this is left here for compatibility with older
@@ -347,8 +355,7 @@ class Adafruit_Thermal:
 		n = len(text)
 		if n > 255: n = 255
 		self.uart.write(chr(n))
-		for i in range(n):
-			self.uart.write(text[i])
+		self.uart.write(text)
 		self.prevByte = '\n'
 
 	# === Character commands ===
